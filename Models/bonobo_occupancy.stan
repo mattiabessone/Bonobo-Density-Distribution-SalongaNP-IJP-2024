@@ -10,7 +10,7 @@ data {
   int<lower=0> R_pred;                           // number of cells for prediction
   //Datasets containing presence/absence and density data 
   int<lower=-5,upper=1> o [Ro,J,T];              // presence absence matrix (with NAs) for final estiamtes of occurrence probability
-  int<lower=-5,upper=1> O_observed [R_pred,J,T];              // presence absence matrix (with NAs) for final estiamtes of occurrence probability
+  int<lower=-5,upper=1> O_observed [R_pred,J,T]; // presence absence matrix (with NAs) for final estiamtes of occurrence probability
 
   ///// Continuous covariates
   // Occupancy
@@ -57,8 +57,8 @@ model {
 ///// define perameters   
   real p1;                                        // detection probability in P1
   real p2;                                        // detection probability in P2
-  real psi1;
-  real psi2;
+  real psi1;                                      // occurrence probability in P1
+  real psi2;                                      // occurrence probability in P2
 
 /////priors
   
@@ -96,7 +96,7 @@ model {
 for (r in 1:Ro){
       
       if(sect_o[r] < 6){                           // if sector < 6 (i.e. surveyd in both periods), then we use sector specific intercepts
-      
+      // declare linear models on  psi
         psi1 = inv_logit(alpha1_1[sect_o[r]] + beta1_1 * F[r] + beta2_1[sect_o[r],K[r,1]] * C[r,1] + beta3_1[sect_o[r],K[r,1]] * V[r,1] + beta4_1[sect_o[r],K[r,1]] * R[r,1] + beta5_1[K[r,1]]);
         psi2 = inv_logit(alpha1_2[sect_o[r]] + beta1_2 * F[r] + beta2_2[sect_o[r],K[r,2]] * C[r,2] + beta3_2[sect_o[r],K[r,2]] * V[r,2] + beta4_2[sect_o[r],K[r,2]] * R[r,2] + beta5_2[K[r,2]]);  
       
@@ -107,7 +107,7 @@ for (r in 1:Ro){
       
       }
       for (j in 1:J){
-        // declare linear model on  p
+        // declare linear models on  p
         p1 = inv_logit(alpha[j,1] + eta[j,1] * L[r,j,1]); 
         p2 = inv_logit(alpha[j,2] + eta[j,2] * L[r,j,2]);
           
@@ -147,15 +147,15 @@ for (r in 1:Ro){
 generated quantities{
 ///// Define generated quantities
   real pred_p [Ro,J,T];
-  real pred_psi [Ro,T];                                                      // predicted occupancy by method and period  
+  real pred_psi [Ro,T];                                                   // predicted occupancy by method and period  
   int O_pred [R_pred,J,T];
-  int O_out [R_pred,T];                                              // predicted occupancy
+  int O_out [R_pred,T];                                                   // predicted occupancy
   real occupied[T];                                                       // proportion of occupied cells for trend analysis, by period
   real occupied_P2;
   real trend_O;                                                           // trend occupancy in sectors surveyed twice
   
 ///// Generate true occupancy estimate conditional on method and period
-  for ( r in 1:Ro){                                                  // predict detection probability to all cells (1km)
+  for ( r in 1:Ro){                                                       // predict detection probability to all cells (1km)
     for (j in 1:J){
     for (t in 1:T){
         
@@ -226,12 +226,12 @@ for (r in 1:R_pred){                                               //predict occ
 
   for (t in 1:T){
    
-    occupied[t] = sum(O_out[1:371,t]);
+    occupied[t] = sum(O_out[1:371,t]);                             // number of occupied cells in sub-sectors surveyed twice
    
   }
  
-  occupied_P2 = sum(O_out[1:R_pred,2]);                            //number of occupied cells in P2
-  trend_O = occupied[2]/occupied[1];                               //bonobo occupancy trend in sub-sectors surveyed twice for scenario i
+  occupied_P2 = sum(O_out[1:R_pred,2]);                            // number of occupied cells in P2
+  trend_O = occupied[2]/occupied[1];                               // bonobo occupancy trend in sub-sectors surveyed twice for scenario i
     
     
 }
